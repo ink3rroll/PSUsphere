@@ -28,6 +28,12 @@ class OrgMemberUpdateView(UpdateView):
     template_name = 'org_member_edit.html'
     success_url = reverse_lazy('orgmember-list')
 
+class StudentUpdateView(UpdateView):
+    model = Student
+    form_class = StudentForm
+    template_name = 'student_edit.html'
+    success_url = reverse_lazy('student-list')
+
 
 
 class HomePageView(ListView):
