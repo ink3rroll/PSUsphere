@@ -19,7 +19,7 @@ from django.urls import path
 from studentorg.views import HomePageView, OrganizationList, OrganizationCreateView, OrganizationUpdateView, OrganizationDeleteView
 from studentorg.views import OrgMemberList, OrgMemberCreateView, OrgMemberUpdateView, OrgMemberDeleteView
 from studentorg.views import StudentList, StudentCreateView, StudentUpdateView, StudentDeleteView
-from studentorg.views import CollegeList, CollegeCreateView
+from studentorg.views import CollegeList, CollegeCreateView, CollegeUpdateView
 from studentorg import views
 
 urlpatterns = [
@@ -39,5 +39,6 @@ urlpatterns = [
     path('student_list/<pk>/delete', StudentDeleteView.as_view(), name='student-delete'),
     path('college_list', CollegeList.as_view(), name='college-list'),
     path('college_list/add', CollegeCreateView.as_view(), name='college-add'),
+    path('college_list/<pk>', CollegeUpdateView.as_view(), name='college-update'),
 
 ]
