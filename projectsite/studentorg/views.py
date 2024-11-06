@@ -85,7 +85,7 @@ class OrganizationList(ListView):
         qs = super(OrganizationList, self).get_queryset(*args, **kwargs)
         if self.request.GET.get("q") is not None:
             query = self.request.GET.get('q')
-            qs = qs.filter(Q(name__icontains=query) | Q(description__icontains=query))
+            qs = qs.filter(Q(name__icontains=query) | Q(description__icontains=query) | Q(college__college_name__icontains=query))
         return qs
 
 
@@ -99,7 +99,7 @@ class OrgMemberList(ListView):
         qs = super(OrgMemberList, self).get_queryset(*args, **kwargs)
         if self.request.GET.get("q") is not None:
             query = self.request.GET.get('q')
-            qs = qs.filter(Q(student__firstname__icontains=query) | Q(student__lastname__icontains=query) | Q(student__middlename__icontains=query) | Q(organization__name__icontains=query))
+            qs = qs.filter(Q(student__firstname__icontains=query) | Q(student__lastname__icontains=query) | Q(student__middlename__icontains=query) | Q(organization__name__icontains=query) | Q(student__program__prog_name__icontains=query))
         return qs
 
 class StudentList(ListView):
