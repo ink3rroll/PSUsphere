@@ -9,6 +9,198 @@ from django.contrib.auth.decorators import login_required
 from typing import Any
 from django.db.models.query import QuerySet
 from django.db.models import Q
+from django.http import JsonResponse
+from django.db.models import Count
+
+def timeline_chart_data(request):
+    data = (
+        OrgMember.objects.values('date_joined')
+        .annotate(member_count=Count('id'))
+        .order_by('date_joined')
+    )
+    labels = [entry['date_joined'].strftime('%Y-%m-%d') for entry in data]
+    counts = [entry['member_count'] for entry in data]
+
+    response_data = {
+        "labels": labels,  
+        "datasets": [
+            {
+                "label": "New Members",
+                "data": counts,  
+                "backgroundColor": "rgba(54, 162, 235, 0.5)",  
+                "borderColor": "rgba(54, 162, 235, 1)",
+                "borderWidth": 1,
+            }
+        ],
+    }
+
+    return JsonResponse(response_data)
+
+class ChartView(ListView):
+    template_name = 'dashboard.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+    def get_queryset(self, *args, **kwargs):
+        pass
+
+def popular_organization_by_college(request):
+    # Aggregate membership counts grouped by college and organization
+    data = (
+        OrgMember.objects
+        .values('organization__college__college_name', 'organization__name')
+        .annotate(member_count=Count('id'))
+        .order_by('organization__college__college_name', '-member_count')
+    )
+
+    # Organize data to find the most popular organization for each college
+    college_data = {}
+    for entry in data:
+        college_name = entry['organization__college__college_name']
+        organization_name = entry['organization__name']
+        member_count = entry['member_count']
+
+        if college_name not in college_data:
+            college_data[college_name] = {
+                "organization": organization_name,
+                "members": member_count
+            }
+
+    # Prepare data for Chart.js
+    labels = list(college_data.keys())  # Colleges
+    counts = [info['members'] for info in college_data.values()]  # Membership counts
+    organizations = [info['organization'] for info in college_data.values()]  # Organization names
+
+    response_data = {
+        "labels": labels,  # x-axis (colleges)
+        "datasets": [
+            {
+                "label": "Most Popular Organization",
+                "data": counts,  # y-axis (member counts)
+                "backgroundColor": "rgba(75, 192, 192, 0.5)",  # Chart.js styling
+                "borderColor": "rgba(75, 192, 192, 1)",
+                "borderWidth": 1,
+            }
+        ],
+        "organization_names": organizations,  # Custom info for tooltip or display
+    }
+
+    return JsonResponse(response_data)
+
+def membership_distribution_by_organization(request):
+    # Aggregate the count of members per organization
+    data = (
+        OrgMember.objects
+        .values('organization__name')  # Group by organization name
+        .annotate(member_count=Count('id'))  # Count members
+        .order_by('-member_count')  # Sort by member count
+    )
+
+    # Prepare data for Chart.js
+    labels = [entry['organization__name'] for entry in data]  # Organization names
+    counts = [entry['member_count'] for entry in data]  # Membership counts
+
+    response_data = {
+        "labels": labels,  # Labels for the chart
+        "datasets": [
+            {
+                "label": "Membership Distribution",
+                "data": counts,  # Data for the chart
+                "backgroundColor": [
+                    "rgba(255, 99, 132, 0.5)",
+                    "rgba(54, 162, 235, 0.5)",
+                    "rgba(255, 206, 86, 0.5)",
+                    "rgba(75, 192, 192, 0.5)",
+                    "rgba(153, 102, 255, 0.5)",
+                    "rgba(255, 159, 64, 0.5)",
+                ],  # Colors for each section
+                "borderColor": [
+                    "rgba(255, 99, 132, 1)",
+                    "rgba(54, 162, 235, 1)",
+                    "rgba(255, 206, 86, 1)",
+                    "rgba(75, 192, 192, 1)",
+                    "rgba(153, 102, 255, 1)",
+                    "rgba(255, 159, 64, 1)",
+                ],
+                "borderWidth": 1,
+            }
+        ],
+    }
+
+    return JsonResponse(response_data)
+
+
+def bubble_chart_data(request):
+    # Aggregate data by college
+    data = (
+        College.objects.annotate(
+            org_count=Count('organization'),  # Number of organizations in the college
+            member_count=Count('organization__orgmember'),  # Number of members across all orgs in the college
+            student_count=Count('program__student')  # Total students in the college
+        )
+        .values('college_name', 'org_count', 'member_count', 'student_count')
+    )
+
+    # Prepare data for Chart.js
+    chart_data = []
+    for entry in data:
+        chart_data.append({
+            "x": entry['member_count'],  # x-axis: number of members
+            "y": entry['org_count'],  # y-axis: number of organizations
+            "r": entry['student_count'] / 10  # Bubble size: scaled total students
+        })
+
+    labels = [entry['college_name'] for entry in data]  # College names
+
+    response_data = {
+        "datasets": [
+            {
+                "label": "Colleges",
+                "data": chart_data,
+                "backgroundColor": "rgba(54, 162, 235, 0.5)",
+                "borderColor": "rgba(54, 162, 235, 1)",
+                "borderWidth": 1,
+            }
+        ],
+        "labels": labels,  # For custom tooltip display
+    }
+
+    return JsonResponse(response_data)
+
+def scatter_plot_data(request):
+    # Aggregate data by college
+    data = (
+        College.objects.annotate(
+            org_count=Count('organization'),  # Number of organizations in the college
+            member_count=Count('organization__orgmember')  # Number of members across all organizations in the college
+        )
+        .values('college_name', 'org_count', 'member_count')
+    )
+
+    # Prepare data for Chart.js
+    chart_data = []
+    for entry in data:
+        chart_data.append({
+            "x": entry['org_count'],  # x-axis: number of organizations
+            "y": entry['member_count'],  # y-axis: number of members
+            "college": entry['college_name']  # College name for tooltips
+        })
+
+    response_data = {
+        "datasets": [
+            {
+                "label": "Colleges",
+                "data": chart_data,
+                "backgroundColor": "rgba(75, 192, 192, 0.5)",
+                "borderColor": "rgba(75, 192, 192, 1)",
+                "borderWidth": 1,
+            }
+        ],
+    }
+
+    return JsonResponse(response_data)
 
 
 
