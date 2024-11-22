@@ -77,7 +77,7 @@
         .then(data => {
             const ctx = document.getElementById('timelineChart').getContext('2d');
             new Chart(ctx, {
-                type: 'line', // or 'bar' for a bar chart
+                type: 'line', 
                 data: data,
                 options: {
                     responsive: true,
@@ -106,8 +106,8 @@
             new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: data.labels,  // College names
-                    datasets: data.datasets,  // Chart.js datasets
+                    labels: data.labels,  
+                    datasets: data.datasets,  
                 },
                 options: {
                     responsive: true,
@@ -146,8 +146,8 @@
             new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: data.labels,  // Organization names
-                    datasets: data.datasets,  // Data and styling
+                    labels: data.labels,  
+                    datasets: data.datasets,  
                 },
                 options: {
                     responsive: true,
@@ -159,8 +159,8 @@
                         tooltip: {
                             callbacks: {
                                 label: function (tooltipItem) {
-                                    const value = tooltipItem.raw;  // Membership count
-                                    const total = data.datasets[0].data.reduce((a, b) => a + b, 0);  // Total members
+                                    const value = tooltipItem.raw;  
+                                    const total = data.datasets[0].data.reduce((a, b) => a + b, 0);  
                                     const percentage = ((value / total) * 100).toFixed(2);
                                     return `${tooltipItem.label}: ${value} (${percentage}%)`;
                                 },
